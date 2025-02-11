@@ -1,6 +1,6 @@
 # app/routes/audit_routes.py
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from app.utils.analyzer import analyze_document, generate_revised_document, compute_diff
 from app.utils.storage import store_revision, get_revision_history
@@ -26,7 +26,7 @@ def analyze():
     doc_id = str(uuid.uuid4())
     revision_data = {
         'revision_number': 1,
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
         'original_text': content,
         'analysis': analysis_result,
         'revised_document': revised_document,
@@ -72,7 +72,7 @@ def re_audit():
     revised_document = generate_revised_document(new_content)
     new_revision = {
         'revision_number': last_revision['revision_number'] + 1,
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
         'original_text': new_content,
         'analysis': analysis_result,
         'revised_document': revised_document,
