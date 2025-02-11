@@ -1,6 +1,5 @@
 # app/db/db_query.py
 
-#!/usr/bin/env python3
 import sqlite3
 import os
 from rich.console import Console
