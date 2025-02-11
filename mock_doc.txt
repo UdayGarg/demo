@@ -1,0 +1,30 @@
+Safety Procedure Document - Draft
+
+1. Introduction:
+This document outlines the standard operating procedures to ensure the safety of all personnel working in the facility. It is imperative that all safety measures are followed to prevent any potential hazards.
+
+2. Hazard Identification:
+During routine inspections, several hazards have been identified. There is a significant risk of fire due to outdated electrical wiring in the main production area. Additionally, several work zones are currently unsafe because of excessive clutter and improperly secured equipment. The possibility of falls is also a concern in areas with poor lighting and slippery surfaces.
+
+3. Compliance Issues:
+Recent audits have revealed that certain procedures are non-compliant with internal safety standards. For example, there are documented violations in the storage section where flammable materials are not properly segregated. This non-compliant behavior must be addressed immediately to ensure worker safety.
+
+4. Accident History:
+Historically, there have been incidents such as a warehouse fire attributed to outdated electrical systems and an incident involving an electrical shock due to faulty wiring. These past accidents highlight the critical need for prompt hazard mitigation and regular safety audits.
+
+5. Regulatory Guidelines:
+According to industry standards:
+   - Electrical installations must adhere to strict guidelines as per IEC 60364.
+   - NFPA 101 requires robust fire safety measures in building design.
+   - OSHA mandates that recognized hazards be mitigated through proper safety protocols.
+
+6. Recommendations:
+It is recommended that all identified hazards be re-assessed and mitigated immediately. Update all safety procedures to include:
+   - A review of electrical systems to address potential fire risks.
+   - Enhanced safety measures in areas prone to falls.
+   - Regular training sessions to ensure compliance with regulatory guidelines.
+   - Immediate correction of any non-compliant practices to avoid future incidents.
+
+7. Conclusion:
+This document serves as a draft for improving safety procedures. Regular re-audits are essential to monitor and update the safety practices in response to changing conditions, equipment updates, and regulatory changes.
+

@@ -1,64 +1,106 @@
-# app/utils/analyzer.py
-import re
+import os
+import json
+from openai import OpenAI
 import difflib
 
-HAZARD_KEYWORDS = ['hazard', 'danger', 'risk', 'unsafe', 'violation', 'fire', 'fall', 'electrical']
-REGULATORY_RULES = {
-    'electrical': "According to IEC 60364, electrical installations must adhere to strict standards.",
-    'fire': "NFPA 101 requires building design to include robust fire safety measures.",
-    'hazard': "OSHA guidelines mandate mitigation of recognized hazards."
-}
-ACCIDENT_HISTORY = [
-    {"keyword": "fire", "incident": "Warehouse fire due to non-compliant safety measures."},
-    {"keyword": "fall", "incident": "Worker injury from fall in an unguarded area."},
-    {"keyword": "electrical", "incident": "Electrical shock incident linked to outdated wiring."}
-]
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def analyze_document(text):
-    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
-    detected_hazards = []
-    compliance_issues = []
-    regulatory_comments = {}
-    accident_incidents = []
+    """
+    Uses OpenAI GPT to analyze the provided safety document.
+    Returns a structured analysis of hazards, compliance issues, and recommendations.
+    """
+    prompt = """
+You are a safety procedure auditor. Analyze the following safety document and extract the requested information.
+Format your response as a JSON object with exactly these keys:
+{
+    "detected_hazards": ["list of hazard sentences"],
+    "compliance_issues": ["list of compliance issue sentences"],
+    "regulatory_comments": {"standard": "guideline"},
+    "accident_incidents": ["list of historical incidents"],
+    "original_text": "the complete document"
+}
+Ensure that each sentence is complete and properly quoted.
 
-    for sentence in sentences:
-        sentence_lower = sentence.lower()
-        if any(keyword in sentence_lower for keyword in HAZARD_KEYWORDS):
-            detected_hazards.append(sentence.strip())
-            for keyword, guideline in REGULATORY_RULES.items():
-                if keyword in sentence_lower:
-                    regulatory_comments.setdefault(keyword, guideline)
-        if 'non-compliant' in sentence_lower or 'violation' in sentence_lower:
-            compliance_issues.append(sentence.strip())
+Document:
+"""
+    # Add the document text
+    prompt += text
 
-    for record in ACCIDENT_HISTORY:
-        if record["keyword"] in text.lower():
-            accident_incidents.append(record["incident"])
+    # Add explicit formatting instructions
+    prompt += """
 
-    return {
-        'detected_hazards': detected_hazards,
-        'compliance_issues': compliance_issues,
-        'regulatory_comments': regulatory_comments,
-        'accident_incidents': accident_incidents,
-        'original_text': text
-    }
+Return ONLY valid JSON that matches the exact format shown above. Do not include any additional explanation or text outside the JSON structure."""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo-1106",  # Using the latest model which is better at JSON
+            messages=[
+                {"role": "system", "content": "You are a safety procedure auditor that outputs only valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"},  # Enforce JSON response
+            temperature=0,
+            max_tokens=2000
+        )
+        
+        content = response.choices[0].message.content
+        return json.loads(content)
+        
+    except json.JSONDecodeError as e:
+        return {
+            "error": f"Failed to parse JSON: {str(e)}",
+            "raw_response": content
+        }
+    except Exception as e:
+        return {
+            "error": f"Analysis failed: {str(e)}",
+            "raw_response": None
+        }
 
 def generate_revised_document(text):
-    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
-    revised_sentences = []
-    for sentence in sentences:
-        revised = sentence
-        if any(keyword in sentence.lower() for keyword in HAZARD_KEYWORDS):
-            revised += " [Recommendation: Review this procedure and implement risk mitigation measures.]"
-        revised_sentences.append(revised)
-    return " ".join(revised_sentences)
+    """
+    Uses OpenAI GPT to generate a revised version of the safety document with recommendations.
+    """
+    prompt = """
+As a safety procedure auditor, revise the following document:
+1. Identify each sentence that mentions a hazard
+2. Add a specific recommendation after each hazard
+3. Keep all other content unchanged
+4. Format recommendations as "Recommendation: [specific action]"
+
+Document:
+"""
+    prompt += text
+    
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo-1106",
+            messages=[
+                {"role": "system", "content": "You are a safety procedure auditor focusing on clear, actionable recommendations."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0,
+            max_tokens=2000
+        )
+        
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        return f"Error generating revision: {str(e)}"
 
 def compute_diff(old_text, new_text):
-    diff = difflib.unified_diff(
-        old_text.splitlines(),
-        new_text.splitlines(),
-        fromfile='Previous Version',
-        tofile='New Version',
-        lineterm=''
-    )
-    return "\n".join(list(diff))
+    """
+    Computes a unified diff between the old and new document versions.
+    """
+    try:
+        diff = difflib.unified_diff(
+            old_text.splitlines(),
+            new_text.splitlines(),
+            fromfile='Previous Version',
+            tofile='New Version',
+            lineterm=''
+        )
+        return "\n".join(list(diff))
+    except Exception as e:
+        return f"Error computing diff: {str(e)}"
