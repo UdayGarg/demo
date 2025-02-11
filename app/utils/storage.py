@@ -1,6 +1,7 @@
+# app/utils/storage.py
+
 import sqlite3
 import json
-from datetime import datetime
 import os
 
 class DatabaseConnection:
@@ -19,69 +20,59 @@ class DatabaseConnection:
             # Execute schema
             conn.executescript(schema)
 
-def store_revision(doc_id, revision_data):
-    """Store a new revision in the database"""
-    db = DatabaseConnection()
-    
-    with sqlite3.connect(db.db_path) as conn:
-        conn.row_factory = sqlite3.Row
+    def store_revision(self, doc_id, revision_data):
+        """Ensure the database is initialized (this will create tables if they don’t exist)"""
         
-        # First, ensure the document exists
-        conn.execute('INSERT OR IGNORE INTO documents (doc_id) VALUES (?)', (doc_id,))
-        
-        # Then store the revision
-        conn.execute('''
-            INSERT INTO revisions 
-            (doc_id, revision_number, timestamp, original_text, analysis, revised_document, diff)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            doc_id,
-            revision_data['revision_number'],
-            revision_data['timestamp'],
-            revision_data['original_text'],
-            json.dumps(revision_data['analysis']),  # Convert dict to JSON string
-            revision_data['revised_document'],
-            revision_data['diff']
-        ))
+        self.init_db()
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            # First, ensure the document exists
+            conn.execute('INSERT OR IGNORE INTO documents (doc_id) VALUES (?)', (doc_id,))
+            # Then store the revision
+            conn.execute('''
+                INSERT INTO revisions
+                (doc_id, revision_number, timestamp, original_text, analysis, revised_document, diff)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                doc_id,
+                revision_data['revision_number'],
+                revision_data['timestamp'],
+                revision_data['original_text'],
+                json.dumps(revision_data['analysis']),
+                revision_data['revised_document'],
+                revision_data['diff']
+            ))
 
-def get_revision_history(doc_id):
-    """Retrieve the revision history for a document"""
-    db = DatabaseConnection()
-    
-    with sqlite3.connect(db.db_path) as conn:
-        conn.row_factory = sqlite3.Row
-        
-        # Check if document exists
-        doc = conn.execute('SELECT doc_id FROM documents WHERE doc_id = ?', (doc_id,)).fetchone()
-        if not doc:
-            return None
-            
-        # Get all revisions
-        cursor = conn.execute('''
-            SELECT revision_number, timestamp, original_text, analysis, revised_document, diff
-            FROM revisions 
-            WHERE doc_id = ?
-            ORDER BY revision_number
-        ''', (doc_id,))
-        
-        revisions = []
-        for row in cursor:
-            revision = dict(row)
-            # Parse JSON string back to dict
-            revision['analysis'] = json.loads(revision['analysis'])
-            revisions.append(revision)
-            
-        return revisions
+    def get_revision_history(self, doc_id):
+        """Retrieve the revision history for a document"""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            # Check if document exists
+            doc = conn.execute('SELECT doc_id FROM documents WHERE doc_id = ?', (doc_id,)).fetchone()
+            if not doc:
+                return None
+            # Get all revisions
+            cursor = conn.execute('''
+                SELECT revision_number, timestamp, original_text, analysis, revised_document, diff
+                FROM revisions
+                WHERE doc_id = ?
+                ORDER BY revision_number
+            ''', (doc_id,))
+            revisions = []
+            for row in cursor:
+                revision = dict(row)
+                # Parse JSON string back to dict
+                revision['analysis'] = json.loads(revision['analysis'])
+                revisions.append(revision)
+            return revisions
 
-def get_latest_revision_number(doc_id):
-    """Get the latest revision number for a document"""
-    db = DatabaseConnection()
-    
-    with sqlite3.connect(db.db_path) as conn:
-        cursor = conn.execute('''
-            SELECT MAX(revision_number) as last_rev
-            FROM revisions
-            WHERE doc_id = ?
-        ''', (doc_id,))
-        result = cursor.fetchone()
-        return result[0] if result[0] is not None else 0
+    def get_latest_revision_number(self, doc_id):
+        """Get the latest revision number for a document"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute('''
+                SELECT MAX(revision_number) as last_rev
+                FROM revisions
+                WHERE doc_id = ?
+            ''', (doc_id,))
+            result = cursor.fetchone()
+            return result[0] if result[0] is not None else 0

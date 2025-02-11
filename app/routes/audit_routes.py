@@ -1,11 +1,13 @@
 # app/routes/audit_routes.py
+
 import uuid
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from app.utils.analyzer import analyze_document, generate_revised_document, compute_diff
-from app.utils.storage import store_revision, get_revision_history
+from app.utils.storage import DatabaseConnection
 
 audit_bp = Blueprint('audit_bp', __name__)
+db_connection = DatabaseConnection()  # instantiate the database connection
 
 @audit_bp.route('/analyze', methods=['POST'])
 def analyze():
@@ -20,6 +22,9 @@ def analyze():
         content = file.read().decode('utf-8')
     except Exception:
         return jsonify({'error': 'Could not read file content'}), 400
+    
+    if not content or "\x00" in content:
+        return jsonify({'error': 'Could not read file content'}), 400
 
     analysis_result = analyze_document(content)
     revised_document = generate_revised_document(content)
@@ -32,12 +37,12 @@ def analyze():
         'revised_document': revised_document,
         'diff': None
     }
-    store_revision(doc_id, revision_data)
+    db_connection.store_revision(doc_id, revision_data)
     return jsonify({'doc_id': doc_id, 'revision': revision_data})
 
 @audit_bp.route('/history/<doc_id>', methods=['GET'])
 def history(doc_id):
-    history = get_revision_history(doc_id)
+    history = db_connection.get_revision_history(doc_id)
     if history is None:
         return jsonify({'error': 'Document ID not found'}), 404
     return jsonify({'doc_id': doc_id, 'revisions': history})
@@ -60,11 +65,11 @@ def re_audit():
     except Exception:
         return jsonify({'error': 'Could not read file content'}), 400
 
-    history = get_revision_history(doc_id)
-    if not history:
+    history_data = db_connection.get_revision_history(doc_id)
+    if not history_data:
         return jsonify({'error': 'Document ID not found'}), 404
 
-    last_revision = history[-1]
+    last_revision = history_data[-1]
     old_text = last_revision['original_text']
     diff = compute_diff(old_text, new_content)
 
@@ -78,5 +83,5 @@ def re_audit():
         'revised_document': revised_document,
         'diff': diff
     }
-    store_revision(doc_id, new_revision)
+    db_connection.store_revision(doc_id, new_revision)
     return jsonify({'doc_id': doc_id, 'revision': new_revision})
