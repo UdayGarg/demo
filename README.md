@@ -6,7 +6,7 @@ A Flask-based RESTful API service that provides automated safety document analys
 
 ### Core Components
 - **Flask Backend**: REST API implementation with Blueprint architecture
-- **OpenAI Integration**: GPT-3.5-turbo for document analysis and recommendations
+- **OpenAI Integration**: GPT-4o for document analysis and recommendations
 - **SQLite Database**: Persistent storage with document versioning
 - **CORS Support**: Cross-origin resource sharing enabled for API access
 
@@ -40,6 +40,7 @@ CREATE TABLE revisions (
 
 ### Prerequisites
 - Python 3.12 or higher
+- uv (tool from astral - pip install uv)
 - OpenAI API key
 - Flask and dependencies
 
@@ -53,24 +54,24 @@ cd <project-directory>
 
 2. Create and activate a virtual environment:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+uv run hello.py
+uv sync
 ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Set up environment variables:
+3. Set up environment variables:
 ```bash
 export OPENAI_API_KEY='your-api-key-here'
 ```
 
-5. Initialize the database:
+4. Initialize the database:
 ```bash
 mkdir app/migrations
 cp schema.sql app/migrations/
+```
+
+5. run the server on localHost:
+```bash
+uv run -m app.main
 ```
 
 ## API Endpoints
@@ -129,7 +130,7 @@ cp schema.sql app/migrations/
 ## Technical Implementation Details
 
 ### Document Analysis
-The system uses OpenAI's GPT-3.5-turbo model for document analysis with the following features:
+The system uses OpenAI's GPT-4o model for document analysis with the following features:
 
 1. **Hazard Detection**: Identifies potential safety hazards in the document
 2. **Compliance Analysis**: Checks for regulatory compliance issues
@@ -201,3 +202,6 @@ Configuration settings in `app/config.py`:
 2. **Database Scalability**:
    - SQLite limitations for concurrent access
    - Consider migration path to PostgreSQL for higher load
+
+3. **File type**:
+   - Currently limited to plaintext, can be modified 

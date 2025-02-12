@@ -7,10 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "flask>=3.1.0",
     "flask-cors>=5.0.0",
-    "numpy>=2.2.2",
-    "ollama>=0.4.7",
     "openai>=1.61.1",
-    "pandas>=2.2.3",
     "pytest>=8.3.4",
     "rich>=13.9.4",
     "ruff>=0.9.6",

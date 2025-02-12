@@ -16,10 +16,10 @@ def analyze_document(text):
 You are a safety procedure auditor. Analyze the following safety document and extract the requested information.
 Format your response as a JSON object with exactly these keys:
 {
-    "detected_hazards": ["list of hazard sentences"],
-    "compliance_issues": ["list of compliance issue sentences"],
+    "detected_hazards": ["list of hazard sentences (give an ordered list)"],
+    "compliance_issues": ["list of compliance issue sentences (give an ordered list)"],
     "regulatory_comments": {"standard": "guideline"},
-    "accident_incidents": ["list of historical incidents"],
+    "accident_incidents": ["list of historical incidents (give an ordered list)"],
     "original_text": "the complete document"
 }
 Ensure that each sentence is complete and properly quoted.
